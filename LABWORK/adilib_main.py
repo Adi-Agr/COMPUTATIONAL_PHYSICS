@@ -1,5 +1,15 @@
 import matplotlib.pyplot as plt
-import numpy as np
+
+def read_matrix(filename):
+    """Read matrix from text file with space-separated values"""
+    
+
+    with open(filename, 'r') as file:
+        matrix = []
+        for line in file:
+            row = [float(num) for num in line.strip().split()]
+            matrix.append(row)
+    return matrix
 
 #==========================================================================================
 def index_f(n):
@@ -53,44 +63,61 @@ def Plot(x, y , title='Sample Plot', xlabel='X-axis Label', ylabel='Y-axis Label
     plt.show()
 
 #==========================================================================================
-def aug(A, b):
-    m,n = A.shape
-    augmented = np.zeros((m,n + 1)) 
+#funct. to create augmented matrix
 
-    for i in range(m):
-        for j in range(n):
-            augmented[i][j] = A[i][j]    
-        augmented[i][n] = b[i]          
-
-    return augmented
-#==========================================================================================
-def gauss_jordan(A, b):
-    
-    n = len(b)
-    # Create augmented matrix [A|b]
-    augmented = aug(A,b) 
-    
+def create_aug(A,B):
+    n = len(A)
+    aug= []
     for i in range(n):
-        
+        row=[]
+        for j in range(n):
+            row.append(float(A[i][j]))
+        for j in range(len(B[0])):
+            row.append(B[i][j])
+        aug.append(row)
+    return aug
+#==========================================================================================
+#Major matrix operations
+
+def swap_rows(matrix,r1,r2):
+    matrix[r1], matrix[r2] =matrix[r2], matrix[r1]
+
+def scale_row(matrix,r,scale):
+    for j in range(len(matrix[r])):
+        matrix[r][j]*=scale
+
+def add_rows(matrix,r1,r2,scale):
+    for j in range(len(matrix[r1])):
+        matrix[r1][j]+= matrix[r2][j]*scale
+#==========================================================================================
+#main function for gauss-jordan elimination
+
+def gauss_jordan(A,B):
+    n = len(B)
+
+    augmented = create_aug(A,B)
+
+    for i in range(n):
         max_row = i
         for k in range(i + 1, n):
             if abs(augmented[k][i]) > abs(augmented[max_row][i]):
-                max_row = k
+                max_row=k
         
-        #Swap rows if
+        #Swap rows
         if max_row != i:
-            augmented[[i, max_row]] = augmented[[max_row, i]]
+            swap_rows(augmented,i,max_row)
         
         #Make diag element 1
         if augmented[i][i] != 0:
-            augmented[i] = augmented[i] / augmented[i][i]
-        
+            scale_row(augmented,i,1/augmented[i][i])
+
         #Make other elements 0
-        for j in range(n):
-            if i != j and augmented[j][i] != 0:
-                augmented[j] = augmented[j] - augmented[j][i] * augmented[i]
-    
-    solution = augmented[:, -1]
+        for k in range(n):
+            if i !=k:
+                scalar=-augmented[k][i]
+                add_rows(augmented,k,i,scalar)
+
+    solution = [row[-1] for row in augmented]
     return solution
 
 
