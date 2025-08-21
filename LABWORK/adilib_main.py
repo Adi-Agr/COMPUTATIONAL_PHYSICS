@@ -12,6 +12,27 @@ def read_matrix(filename):
     return matrix
 
 #==========================================================================================
+def mat_mult(X,Y):
+    result=[]
+    for i in range(len(X)):
+        row=[]
+        for j in range(len(Y[0])):
+            sum_val=0
+            for k in range(len(Y)):
+                sum_val+= X[i][k] * Y[k][j]
+            row.append(sum_val)
+        result.append(row)
+    return result
+
+def transpose(X):
+    result=[]
+    for i in range(len(X[0])):
+        row=[]
+        for j in range(len(X)):
+            row.append(X[j][i])
+        result.append(row)
+    return result
+#==========================================================================================
 def index_f(n):
     return [(i+1)/n for i in range(n)]
 
@@ -66,7 +87,7 @@ def Plot(x, y , title='Sample Plot', xlabel='X-axis Label', ylabel='Y-axis Label
 #funct. to create augmented matrix
 
 def create_aug(A,B):
-    n = len(A)
+    n =len(A)
     aug= []
     for i in range(n):
         row=[]
@@ -93,22 +114,22 @@ def add_rows(matrix,r1,r2,scale):
 #main function for gauss-jordan elimination
 
 def gauss_jordan(A,B):
-    n = len(B)
+    n=len(B)
 
-    augmented = create_aug(A,B)
+    augmented=create_aug(A,B)
 
     for i in range(n):
         max_row = i
-        for k in range(i + 1, n):
+        for k in range(i+1, n):
             if abs(augmented[k][i]) > abs(augmented[max_row][i]):
                 max_row=k
         
         #Swap rows
-        if max_row != i:
+        if max_row!=i:
             swap_rows(augmented,i,max_row)
         
         #Make diag element 1
-        if augmented[i][i] != 0:
+        if augmented[i][i]!=0:
             scale_row(augmented,i,1/augmented[i][i])
 
         #Make other elements 0
@@ -117,8 +138,81 @@ def gauss_jordan(A,B):
                 scalar=-augmented[k][i]
                 add_rows(augmented,k,i,scalar)
 
-    solution = [row[-1] for row in augmented]
+    solution=[row[-1] for row in augmented]
     return solution
 
 
 #==========================================================================================
+#=========ASSGN3========================
+#=======================================
+def ludecomp_doolittle(matrix):
+    '''(diagonal of L =1)....return L and U'''
+    n=len(matrix)
+    L=[[0.0]*n for _ in range(n)]
+    U=[[0.0]*n for _ in range(n)]
+
+    #_____set diag 1________
+
+    for i in range(n):
+        L[i][i]=1.0
+
+    #______main_Algo________
+
+    for i in range(n):
+
+        #_calculate U element
+        for j in range(i,n):
+            sum_val=0.0
+            for k in range(i):
+                sum_val+=L[i][k]*U[k][j]
+            U[i][j]=matrix[i][j]-sum_val
+
+        #_calculate L element
+        for j in range(i+1,n):
+            if U[i][i]==0:
+                print("LU-decomp. failed--matrix singular!!!") #  <-----i took care of singularity
+                return None,None
+            sum_val=0.0
+            for k in range(i):
+                sum_val+=L[j][k]*U[k][i]
+            L[j][i]=(matrix[j][i]-sum_val)/U[i][i]
+
+    print("LU-decomp. successful")
+    return L,U
+
+#=======================================
+def forward_substitution(L,B):
+    n=len(L)
+    Y=[0.0]*n
+
+    print("Forward_Sub....Uy=b...(finding y! )")
+
+    for i in range(n):
+        sum_val=0.0
+        for j in range(i):
+            sum_val += L[i][j] * Y[j]
+        Y[i] = (B[i] - sum_val) / L[i][i]
+        print(f"Y[{i}] = {Y[i]:.6f}")
+    return Y
+
+def backward_substitution(U,Y):
+    n=len(U)
+    X=[0.0]*n
+
+    print("Backward_Sub....Ux=y...(finding x! )")
+
+    for i in range(n-1,-1,-1):
+        sum_val=0.0
+        for j in range(i+1,n):
+            sum_val+=U[i][j]*X[j]
+        X[i] = (Y[i]-sum_val)/U[i][i]
+        print(f"x[{i}]={X[i]:.6f}")
+    return X
+
+def solve_by_backward_forward_substitution(A,B):
+    L,U=ludecomp_doolittle(A)
+    Y=forward_substitution(L,B)
+    X=backward_substitution(U,Y)
+    return X
+
+#=======================================
