@@ -185,14 +185,14 @@ def forward_substitution(L,B):
     n=len(L)
     Y=[0.0]*n
 
-    print("Forward_Sub....Uy=b...(finding y! )")
+    print("Forward Substitution: Solving L*y=B")
 
     for i in range(n):
         sum_val=0.0
         for j in range(i):
-            sum_val += L[i][j] * Y[j]
-        Y[i] = (B[i] - sum_val) / L[i][i]
-        print(f"Y[{i}] = {Y[i]:.6f}")
+            sum_val+=L[i][j]*Y[j]
+        Y[i]=(B[i]-sum_val)/L[i][i]
+        print(f"Y[{i}]={Y[i]:.6f}")
     return Y
 
 def backward_substitution(U,Y):
@@ -209,6 +209,21 @@ def backward_substitution(U,Y):
         print(f"x[{i}]={X[i]:.6f}")
     return X
 
+def backward_substitution_transpose(L,y):
+    n=len(L)
+    X=[0.0] *n
+    #___________________________________
+    print("Backward Substitution: Solving L^T*x = y")
+    #___________________________________
+    for i in range(n-1,-1,-1):
+        sum_val = 0.0
+        for j in range(i+1,n):
+            # Use L[j][i] instead of L[i][j] to get transpose effect
+            sum_val+=L[j][i]*X[j]
+        X[i]=(y[i]-sum_val)/L[i][i]
+        print(f"X[{i}] = {X[i]:.6f}")    
+    return X
+
 def solve_by_backward_forward_substitution(A,B):
     L,U=ludecomp_doolittle(A)
     Y=forward_substitution(L,B)
@@ -216,3 +231,99 @@ def solve_by_backward_forward_substitution(A,B):
     return X
 
 #=======================================
+
+
+
+def cholesky_decomposition(matrix):
+    '''
+    Decomposes A=L*L^T (where L is lower triangular)
+    '''
+    n = len(matrix)
+    L = [[0.0]*n for _ in range(n)]
+    
+    for i in range(n):
+        # Diagonal elements
+        sum_val = 0.0
+        for k in range(i):
+            sum_val+=L[i][k] ** 2        
+        # Check if matrix is >0
+        if matrix[i][i]-sum_val<=0:
+            print("Matrix is not positive definite!")
+            return None
+        #___________________________________            
+        L[i][i]=(matrix[i][i]-sum_val)**0.5
+        #___________________________________
+        # Non-diagonal elements
+        for j in range(i+1, n):
+            sum_val = 0.0
+            for k in range(i):
+                sum_val+=L[i][k]*L[j][k]            
+            L[j][i]=(matrix[j][i]-sum_val)/L[i][i]
+    
+    print("Cholesky decomposition successful")
+    return L
+
+#___________________________________________________________
+def solve_by_cholesky(A,b):
+    '''Solve linear system A*x=b via Cholesky!!'''
+    # Get Cholesky factor L where A = L*L^T
+    L=cholesky_decomposition(A)
+    if L is None:
+        return None
+    # Solve L*y=b for y
+    y=forward_substitution(L, b)
+    # Solve L^T*x=y for x
+    x=backward_substitution_transpose(L, y)
+    return x
+
+#____________________________________________________________
+def jacobi_iteration(A,b,tol=1e-10,max_iter=1000):
+    '''
+    tol: tolerance for convergence
+    max_iter: maximum number of iterations
+    '''
+    n=len(A)
+    x=[0.0]*n  # Initial_guess x^(k)
+    x_new=[0.0]*n # x^(k+1)
+    iterations=0
+    error=float('inf')
+    #__________________________________
+    print("Jacobi Iteration Method")
+    print("Iter\t",end="")
+    for i in range(n):
+        print(f"x[{i}]\t\t",end="")
+    print("Error")
+    #__________________________________
+    print(f"{iterations}\t", end="")
+    for i in range(n):
+        print(f"{x[i]:.6f}\t", end="")
+    print("---")
+    #__________________________________    
+    while error>tol and iterations<max_iter:
+        iterations+=1        
+        #__main__iteration__loop!
+        for i in range(n):
+            sum=0.0
+            for j in range(n):
+                if i!=j:
+                    sum+=A[i][j]*x[j]
+            x_new[i]=(b[i]-sum)/A[i][i]
+        #_______________________________
+        error = max(abs(x_new[i]-x[i]) for i in range(n))
+        #_______________________________
+        print(f"{iterations}\t", end="")
+        for i in range(n):
+            x[i] = x_new[i]     # updating x
+            print(f"{x[i]:.6f}\t", end="")
+        print(f"{error:.8f}")
+        #checking_if_converged
+        if error<=tol:
+            print(f"\nConverged after {iterations} iterations.")
+            break
+    #_______________________________
+    if iterations>=max_iter:
+        print(f"\nFailed to converge after {max_iter} iterations.")
+    #_______________________________
+    return x, iterations
+
+#____________________________________________________________________
