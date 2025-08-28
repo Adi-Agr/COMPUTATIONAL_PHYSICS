@@ -327,7 +327,32 @@ def jacobi_iteration(A,b,tol=1e-10,max_iter=1000):
     return x, iterations
 
 #____________________________________________________________________
-
+def make_diagonally_dominant(A, b):
+    '''
+    Attempt to make the matrix diagonally dominant(by swapping row).
+    '''
+    n=len(A)
+    #make_copy_first
+    A_new=[row[:] for row in A]
+    b_new=b[:]
+    
+    # try findin' diagonal dominant element
+    for i in range(n):
+        max_index=i
+        max_value=abs(A_new[i][i])
+        
+        # Find the row with the largest absolute value in column i
+        for j in range(i+1,n):
+            if abs(A_new[j][i])>max_value:
+                max_value=abs(A_new[j][i])
+                max_index=j
+        
+        # Swap rows if necessary
+        if max_index!=i:
+            swap_rows(A_new,i,max_index)
+            swap_rows(b_new,i,max_index)
+    print("\nAttempted to make matrix diagonally dominant by row swapping")
+    return A_new,b_new
 
 
 #=====================================================
@@ -393,4 +418,4 @@ def gauss_seidel_iteration(A, b, tol=1e-6, max_iter=1000):
     if iterations>=max_iter:
         print(f"\nFailed to converge after {max_iter} iterations.")
     #______________________________________
-    return x,iterations
+    return x, iterations
