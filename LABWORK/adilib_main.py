@@ -394,3 +394,39 @@ def gauss_seidel_iteration(A, b, tol=1e-6, max_iter=1000):
         print(f"\nFailed to converge after {max_iter} iterations.")
     #______________________________________
     return x,iterations
+
+#=======================================
+def brackett(f,a,b):
+    while f(a)*f(b)>0:
+        if abs(f(a))<abs(f(b)):
+            a-=1.5*(b-a)
+        else:
+            b+=1.5*(b-a)
+    else:
+        return a,b
+
+def bisectionn(f,a,b,tol=10e-6,iter=100):
+    a,b=brackett(f,a,b)
+    for i in range(iter):
+        c=(a+b)/2
+        if abs(b-a)<tol or abs(f(a))<tol or abs(f(b))<tol:
+            return c
+        else:
+            if f(b)*f(c)<0 :
+                a=c
+            else:
+                b=c
+    return (a+b)/2
+def regula_falsi(f,a,b,tol=10e-6,iter=100):
+    a,b=brackett(f,a,b)
+    for i in range(iter):
+        c=a-f(a)*(b-a)/(f(b)-f(a))
+        if abs(f(c))<tol or abs(b-a)<tol:
+            return c
+        elif f(a)*f(c)<0:
+            b=c
+        else:
+            a=c
+    return (a+b)/2
+
+    #===========================================
