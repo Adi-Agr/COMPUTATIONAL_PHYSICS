@@ -517,6 +517,37 @@ class Roots:
             x0=x1
         print(f"\nFailed to converge after {total_iter} iterations.")
         return x0, total_iter
+    
+    @staticmethod
+    def fixed_point_multivariable(g,x0,tol=1e-6,max_iter=100):
+        x=x0.copy()  # Make copy
+        tot_iter=[]
+        print("Iter\t||x_k+1 - x_k||\t||x_k+1||")
+        print("-"*50)
+        
+        for i in range(max_iter):
+            tot_iter.append(i)
+            # Next Iter.
+            x_new=g(x)
+            
+            diff_norm = sum((x_new[j]-x[j])**2 for j in range(len(x)))**0.5 #...calculate norms
+            x_new_norm = sum(x_new[j]**2 for j in range(len(x)))**0.5
+            
+            rel_error=diff_norm/max(x_new_norm,1e-10) #...calculate relative error
+            
+            print(f"{i}\t{diff_norm:.8f}\t{x_new_norm:.8f}") #print process
+            
+            # Check convergence using relative error
+            if rel_error<tol:
+                print(f"\nConverged after {i+1} iterations.")
+                print(f"Solution: {x_new}")
+                return x_new,tot_iter
+            
+            x = x_new.copy() #...update x
+        print(f"\nFailed to converge after {max_iter} iterations.")
+        print(f"Current solution: {x}")
+        return x,tot_iter
+    
     @staticmethod
     def NewtonRaphson(f,f_d,x0,tol=1e-6,max_iter=100):
         x=x0
@@ -534,15 +565,45 @@ class Roots:
             #convergence-check
             if abs(delta_x)<tol or abs(f_val)<tol:
                 print("Total Iterations(new-raph):-",len(iter),x_new,'\nf(root=)',f(x_new))
-                return x_new, iter
-            x = x_new
+                return x_new,iter
+            x=x_new
         print(f"\nFailed to converge after {max_iter} iterations.")
         return x, iter
 
+    @staticmethod
+    def NewtonRaphson_multivariable(f,J,x0,tol=1e-6,max_iter=100):
+        x=x0.copy()  #...make copy to avoid any error
+        tot_iter=[]
+        n=len(x)
+        
+        print("Iter\t||f(x)||\tΔx")
+        print("-" * 40)
+        
+        for i in range(max_iter):
+            tot_iter.append(i)
+            f_val=f(x)
+            J_val=J(x)
+            
+            f_norm=sum(f_i**2 for f_i in f_val)**0.5 #calculating norm
+            
+            delta_x=LinearSystems.gauss_jordan(J_val,f_val) #.....del_x=J^(-1)f(x)
+            delta_norm=sum(dx**2 for dx in delta_x)**0.5 #...calculating delta_norm
+            
+            print(f"{i}\t{f_norm:.8f}\t{delta_norm:.8f}") #....to print processs
+            
+            x=[x[j]-delta_x[j] for j in range(n)] #...update x
+            
+            # Check convergence
+            if f_norm<tol or delta_norm<tol:
+                print(f"\nConverged after {i+1} iterations.")
+                print(f"Solution: {x}")
+                print(f"Function values at solution: {f(x)}")
+                return x,tot_iter
+        
+        print(f"\nFailed to converge after {max_iter} iterations.")
+        return x,tot_iter
+
     #===========================================
-    
-
-
 # For backward compatibility!!!
 
 def brackett(f,a,b):
