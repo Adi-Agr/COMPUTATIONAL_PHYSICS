@@ -602,7 +602,28 @@ class Roots:
         
         print(f"\nFailed to converge after {max_iter} iterations.")
         return x,tot_iter
-
+class Integration:
+    '''Numerical integration methods'''
+    
+    @staticmethod
+    def midpoint_integration(l, L, f, N=10000):
+        '''Midpoint integration method'''
+        h=(L-l)/N
+        integral=0
+        for i in range(N):
+            integral+=f(l+(i+0.5)*h)
+        integral*=h
+        return integral
+    
+    @staticmethod
+    def trapezoidal_integration(l, L, f, N=10000):
+        '''Trapezoidal integration method'''
+        h=(L-l)/N
+        integral=0.5*(f(l)+f(L))
+        for i in range(1, N):
+            integral+=f(l+i*h)
+        integral*=h
+        return integral
     #===========================================
 # For backward compatibility!!!
 
