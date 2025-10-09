@@ -624,6 +624,39 @@ class Integration:
             integral+=f(l+i*h)
         integral*=h
         return integral
+
+    @staticmethod
+    def simpson(l,L,f,N=40):
+        '''Simpson Integral Method'''
+        h=(L-l)/N
+        integral=f(l)+f(L)
+        for i in range(1,N,2):
+            integral+= 4*f(l+i*h)
+        for i in range(2,N-1,2):
+            integral+= 2*f(l+i*h)
+        integral*= h/3
+        return integral
+    
+    @staticmethod
+    def montecarlo_diff(l,L,f,N=40,tol=10e-6):
+        true=1-math.sin(2)/2
+        FN=0
+        FN_list=[]
+        N_list=[]
+        while abs(true-FN)>tol:
+            X=[(l+(L-l)*i) for i in RandomNumbers.pRNG_LCG(N)]
+            FX=[f(i) for i in X]
+            sigma_sq=0
+            for i in X:
+                sigma_sq+=((1/N)*(f(i)**2))
+            sigma_sq-=((1/N)*sum(FX))**2
+            FN=sum(FX)*(L-l)/N
+            FN_list.append(FN)
+            N+=20
+            N_list.append(N)
+        return FN,FN_list,N_list,N
+    
+
     #===========================================
 # For backward compatibility!!!
 
