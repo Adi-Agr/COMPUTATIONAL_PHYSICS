@@ -13,7 +13,7 @@ Due to lack of knowledge on classes, I was not using it till now . But still ,to
 
 import matplotlib.pyplot as plt
 import math
-
+import numpy as np
 class MatrixOperations:
     """Class for basic matrix operations"""
     @staticmethod
@@ -655,6 +655,20 @@ class Integration:
             N+=20
             N_list.append(N)
         return FN,FN_list,N_list,N
+    @staticmethod
+    def gaussian_quadrature(f, a, b, exact_value=100, tol=1e-9):
+        n=2
+        integral=0
+        while True:
+            [x,w]=list(np.polynomial.legendre.leggauss(n))
+            integral_new=0
+            for i in range(n):
+                xi=0.5*(b-a)*x[i]+0.5*(b+a)
+                integral_new+=0.5*(b-a)*w[i]*f(xi)
+            if abs(integral_new-exact_value)<= tol:  #convo.-check
+                return integral_new, n
+            integral=integral_new
+            n+=1
     
 
     #===========================================
