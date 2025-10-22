@@ -669,7 +669,59 @@ class Integration:
                 return integral_new, n
             integral=integral_new
             n+=1
-    
+class ODEs:
+    '''Numerical methods for solving Ordinary Differential Equations (ODEs)'''
+    @staticmethod
+    def euler_solver(f,y0,x0,xf,dx=.1):
+        
+        '''
+        INPUT:
+        f: funct.--->ODE dy/dx=f(x,y)
+        y0: initial y---> y(x0)=y0
+        x0: initial x
+        xf: final x
+        dx:step-size
+        OUTPUT:
+        x_val: array of x val
+        y_val: array of y val
+        '''
+        N=int(math.ceil((xf-x0)/dx))
+        x_val=[0]*(N+1)
+        y_val=[0]*(N+1)
+        x_val[0]=x0
+        y_val[0]=y0
+        for i in range(1,N+1):
+            x_val[i]=x_val[i-1]+dx
+            y_val[i]=y_val[i-1]+f(x_val[i-1],y_val[i-1])*dx
+        return x_val,y_val
+    @staticmethod
+
+    def predictor_corrector_solver(f,y0,x0,xf,dx=.1):
+
+        '''
+        INPUT:
+        f: funct.--->ODE dy/dx=f(x,y)
+        y0: initial y--->y(x0)=y0
+        x0: initial x
+        xf: final x
+        dx: step size
+        OUTPUT:
+        x_values: array of x val
+        y_values: array of y val
+        '''
+        N=int(math.ceil((xf-x0)/dx))
+        x_val=[0]*(N+1)
+        y_val=[0]*(N+1)
+        x_val[0]=x0
+        y_val[0]=y0
+        for i in range(1,N+1):
+            x_val[i]=x_val[i-1]+dx
+            # Predictor step (Euler's method)
+            y_pred=y_val[i-1]+f(x_val[i-1],y_val[i-1])*dx
+            # Corrector step (Trapezoidal rule)
+            y_val[i]=y_val[i-1]+(f(x_val[i-1],y_val[i-1])+f(x_val[i],y_pred))*dx/2
+        return x_val,y_val
+
 
     #===========================================
 # For backward compatibility!!!
