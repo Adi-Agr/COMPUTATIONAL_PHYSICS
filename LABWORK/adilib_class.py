@@ -26,6 +26,16 @@ class MatrixOperations:
                 matrix.append(row)
         return matrix
     @staticmethod
+    def flatten(matrix):
+        """Flatten a 1D matrix (list of lists) into a single list"""
+        return [elem for row in matrix for elem in row] 
+    #example: [[1],[2],[3]] -> [1,2,3]
+    @staticmethod
+    def unflatten(vector):
+        """Convert a flat list into a 1D matrix (list of lists)"""
+        return [[elem] for elem in vector]
+    #example: [1,2,3] -> [[1],[2],[3]]
+    @staticmethod
     def multiplyy(X, Y):
         """Matrix multiplication: X * Y"""
         result = []
@@ -38,6 +48,10 @@ class MatrixOperations:
                 row.append(sum_val)
             result.append(row)
         return result
+    @staticmethod
+    def dott(X, Y):
+        """Dot product of two vectors"""
+        return MatrixOperations.multiplyy(MatrixOperations.transposee(X), Y)
     @staticmethod
     def transposee(X):
         """Transpose a matrix"""
@@ -721,9 +735,95 @@ class ODEs:
             # Corrector step (Trapezoidal rule)
             y_val[i]=y_val[i-1]+(f(x_val[i-1],y_val[i-1])+f(x_val[i],y_pred))*dx/2
         return x_val,y_val
+    @staticmethod
+    def rk4_solver(f,y0,x0,xf,dx=.1):
 
-
+        '''
+        INPUT:
+        f: funct.--->ODE dy/dx=f(x,y)
+        y0: initial y--->y(x0)=y0
+        x0: initial x
+        xf: final x
+        dx: step size
+        OUTPUT:
+        x_values: array of x val
+        y_values: array of y val
+        '''
+        N=int(((xf-x0)/dx))
+        x_val=[0]*(N+1)
+        y_val=[0]*(N+1)
+        x_val[0]=x0
+        y_val[0]=y0
+        for i in range(1,N+1):
+            x_val[i]=x_val[i-1]+dx
+            k1=dx*f(x_val[i-1],y_val[i-1])
+            k2=dx*f(x_val[i-1]+dx/2,y_val[i-1]+k1/2)
+            k3=dx*f(x_val[i-1]+dx/2,y_val[i-1]+k2/2)
+            k4=dx*f(x_val[i-1]+dx,y_val[i-1]+k3)
+            y_val[i]=y_val[i-1]+(k1+2*k2+2*k3+k4)/6 # + order(h^5)....follows from simpson error bound
+        return x_val,y_val
+    
+    @staticmethod
+    # RK4 for systems (vector y) and damped simple harmonic oscillator solver
+    def rk4_system_solver(f, y0, t0, tf, dt=0.01):
+        """
+        Solve dy/dt = f(t, y) where y can be a vector (list or tuple).
+        Inputs:
+        f: function f(t, y) -> list/tuple of derivatives same length as y
+        y0: initial state (list or tuple)
+        t0: initial time
+        tf: final time
+        dt: time-step
+        Returns:
+        t_vals: list of times, y_vals: list of state vectors
+        """
+        import math
+        N = int(math.ceil((tf - t0) / dt))
+        t_vals = [0] * (N + 1)
+        y_vals = [None] * (N + 1)
+        t_vals[0] = t0
+        y_vals[0] = list(y0)
+        for i in range(1, N + 1):
+            t_prev = t_vals[i-1]
+            y_prev = y_vals[i-1]
+            t_vals[i] = t_prev + dt
+            # compute k1..k4 as vectors
+            k1 = [dt * val for val in f(t_prev, y_prev)]
+            y_k2 = [y_prev[j] + 0.5 * k1[j] for j in range(len(y_prev))]
+            k2 = [dt * val for val in f(t_prev + dt/2, y_k2)]
+            y_k3 = [y_prev[j] + 0.5 * k2[j] for j in range(len(y_prev))]
+            k3 = [dt * val for val in f(t_prev + dt/2, y_k3)]
+            y_k4 = [y_prev[j] + k3[j] for j in range(len(y_prev))]
+            k4 = [dt * val for val in f(t_prev + dt, y_k4)]
+            y_next = [y_prev[j] + (k1[j] + 2*k2[j] + 2*k3[j] + k4[j]) / 6.0 for j in range(len(y_prev))]
+            y_vals[i] = y_next
+        return t_vals, y_vals
+    
+    @staticmethod
+    def solve_damped_sho(x0=1.0, v0=0.0, m=1.0, k=1.0, mu=0.15, t0=0.0, tf=40.0, dt=0.01):
+        """
+        Solve x'' + mu*x' + (k/m) x = 0 using RK4 on the system y = [x, v].
+        Returns arrays t, x, v, E where E = 0.5*m*v^2 + 0.5*k*x^2
+        """
+        def f(t, y):
+            x, v = y[0], y[1]
+            dxdt = v
+            dvdt = -mu * v - (k / m) * x
+            return [dxdt, dvdt]
+        t_vals, y_vals = ODEs.rk4_system_solver(f, [x0, v0], t0, tf, dt)
+        x_vals = [s[0] for s in y_vals]
+        v_vals = [s[1] for s in y_vals]
+        E_vals = [0.5 * m * v_vals[i]**2 + 0.5 * k * x_vals[i]**2 for i in range(len(x_vals))]
+        return t_vals, x_vals, v_vals, E_vals
     #===========================================
+# Convenience wrapper: expose rk4_system_solver at module level for direct calls
+def rk4_system_solver(f, y0, t0, tf, dt=0.01):
+    """Module-level wrapper to call ODEs.rk4_system_solver.
+
+    Keeps backward compatibility and provides an easy function import.
+    """
+    return ODEs.rk4_system_solver(f, y0, t0, tf, dt)
+
 # For backward compatibility!!!
 
 def brackett(f,a,b):
