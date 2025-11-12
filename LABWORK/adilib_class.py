@@ -822,8 +822,112 @@ def rk4_system_solver(f, y0, t0, tf, dt=0.01):
 
     Keeps backward compatibility and provides an easy function import.
     """
-    return ODEs.rk4_system_solver(f, y0, t0, tf, dt)
 
+    return ODEs.rk4_system_solver(f, y0, t0, tf, dt)
+class FITs:
+    @staticmethod
+    def linear_fit(x, y):
+        """
+        Linear-fitting(y=a+b*x)
+
+        Returns:
+            dict with keys:
+            'a' (intercept),
+            'b' (slope),
+            'R2' (coefficient of determination),
+            'y_fit' (predicted y values)
+        (SAME THING IS RETURNED FOR OTHERS MODEL SO NOT WRITING!)
+        """
+        N=len(x)
+        s_x=sum(x)
+        s_y=sum(y)
+        s_xx=sum([xi * xi for xi in x])
+        s_xy=sum([x[i]*y[i] for i in range(N)])
+
+        b=(N*s_xy-s_x*s_y)/(N*s_xx-s_x**2)
+        a=(s_y-b*s_x)/N
+
+        y_fit=[a+b*xi for xi in x]#calculate(R2)
+        mean_y=sum(y)/N
+        ss_res=sum([(y[i]-y_fit[i]) ** 2 for i in range(N)])
+        ss_tot=sum([(y[i]-mean_y) ** 2 for i in range(N)])
+        r2=1-ss_res/ss_tot
+
+        return {"a": a, "b": b, "R2": r2, "y_fit": y_fit}
+
+
+    @staticmethod
+    def lagrange_interpolation(x,y,x_new):
+        """
+        Performs Lagrange polynomial interpolation(n order)
+        """
+        n = len(x)
+        y_new = 0
+        for i in range(n):
+            # Calculate L_i(x_new)
+            L_i=1
+            for j in range(n):
+                if i!=j:
+                    L_i*=(x_new-x[j])/(x[i]-x[j])
+            
+            
+            y_new+=y[i] *L_i #contri. to final result
+        
+        return y_new
+
+    @staticmethod
+    def power_law_fit(x, y):
+        """
+        Fits Power-law-model---->[ y = a * x^b ]"""
+        N = len(x)
+        # Transform ----> ln(y) = ln(a) + b*ln(x)
+        ln_x = [math.log(x[i]) for i in range(N)]
+        ln_y = [math.log(y[i]) for i in range(N)]
+
+        fit_linear= FITs.linear_fit(ln_x,ln_y)
+        b = fit_linear['b']
+        a = math.exp(fit_linear['a'])
+        
+        y_pred = [a * (x[i]**b) for i in range(N)]# Calculate R2
+        mean_y = sum(y) / N
+        ss_res = sum([(y[i] - y_pred[i])**2 for i in range(N)])
+        ss_tot = sum([(y[i] - mean_y)**2 for i in range(N)])
+        r2 = 1 - (ss_res / ss_tot)
+        
+        return {"a": a, "b": b, "R2": r2, "y_pred": y_pred}
+
+    @staticmethod
+    def exponential_fit(x, y):
+        """
+        Fits Exponential-model[y = a * e^(-b*x)]
+        Transform: ln(y) = ln(a) - b*x
+        Linear fit: Y = A + c*X where Y=ln(y), A=ln(a), c=-b
+        """
+        N = len(x)
+        # Transform-->[ ln(y) = ln(a) - b*x ]
+        ln_y=[math.log(y[i]) for i in range(N)]
+        
+        sum_x=sum(x)
+        sum_lny=sum(ln_y)
+        sum_x2=sum([x[i]**2 for i in range(N)])
+        sum_x_lny=sum([x[i]*ln_y[i] for i in range(N)])
+
+        slope=(N*sum_x_lny-sum_x*sum_lny)/(N*sum_x2-sum_x**2)
+        intercept=(sum_lny-slope*sum_x)/N
+        
+        b=-slope
+        a=math.exp(intercept)
+        
+        # Calculate R2
+        y_pred=[a*math.exp(-b*x[i]) for i in range(N)]
+        mean_y=sum(y)/N
+        ss_res=sum([(y[i]-y_pred[i])**2 for i in range(N)])
+        ss_tot=sum([(y[i]-mean_y)**2 for i in range(N)])
+        r2=1-(ss_res/ss_tot)
+        
+        return {"a":a, "b":b, "R2":r2, "y_pred":y_pred}
+
+# ============================================================
 # For backward compatibility!!!
 
 def brackett(f,a,b):
@@ -915,3 +1019,24 @@ def printt(matrix=[[1,2],[3,4]]):
     print(d)
     return d
 #===============================================================================================
+def linear_fit(x, y):
+    N = len(x)
+    s_x = sum(x)
+    s_y = sum(y)
+    s_xx = sum([xi * xi for xi in x])
+    s_xy = sum([x[i] * y[i] for i in range(N)])
+
+    b = (N * s_xy - s_x * s_y) / (N * s_xx - s_x ** 2)
+    a = (s_y - b * s_x) / N
+
+    y_fit = [a + b * xi for xi in x]
+    mean_y = sum(y) / N
+    ss_res = sum([(y[i] - y_fit[i]) ** 2 for i in range(N)])
+    ss_tot = sum([(y[i] - mean_y) ** 2 for i in range(N)])
+    r2 = 1 - ss_res / ss_tot
+
+    return {"a": a, "b": b, "R2": r2, "y_fit": y_fit}
+
+# Example usage
+result = linear_fit([1, 2, 3, 4, 5], [2.1, 4.2, 6.1, 8.3, 10.1])
+print(result)
